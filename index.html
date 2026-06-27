@@ -354,6 +354,27 @@
 
   /* Catalog presets */
   .preset-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 8px; }
+  .preset-group-header {
+    grid-column: 1 / -1;
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    padding: 14px 0 4px;
+    border-bottom: 1px solid var(--border);
+    margin: 6px 0 4px;
+    font-weight: 600;
+  }
+  .preset-group-header.first { padding-top: 0; }
+  .preset-group-desc {
+    grid-column: 1 / -1;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted-2);
+    margin: 0 0 4px;
+    line-height: 1.4;
+  }
   .preset-btn {
     background: var(--panel-2);
     border: 1px solid var(--border);
@@ -391,7 +412,7 @@
 <header class="masthead">
   <div class="masthead-row">
     <span class="brand"><span class="dot"></span>ASTEROID BRIDGE</span>
-    <span class="version" id="versionTag">v1.2 · JPL via PROXY</span>
+    <span class="version" id="versionTag">v1.3 · CATALOGUE ÉTENDU</span>
   </div>
   <h1>Éphémérides pour Seestar</h1>
   <div class="subtitle">RA/Dec topocentriques · format My Favorites</div>
@@ -591,23 +612,111 @@ const DEFAULT_SITE_PRESETS = [
 ];
 
 const PRESET_CATALOG = [
-  { num: 1,     name: 'Cérès' },
-  { num: 2,     name: 'Pallas' },
-  { num: 3,     name: 'Junon' },
-  { num: 4,     name: 'Vesta' },
-  { num: 6,     name: 'Hébé' },
-  { num: 7,     name: 'Iris' },
-  { num: 8,     name: 'Flore' },
-  { num: 10,    name: 'Hygie' },
-  { num: 15,    name: 'Eunomie' },
-  { num: 16,    name: 'Psyché' },
-  { num: 21,    name: 'Lutetia' },
-  { num: 433,   name: 'Eros' },
-  { num: 1036,  name: 'Ganymed' },
-  { num: 4179,  name: 'Toutatis' },
-  { num: 15094, name: 'Polymele' },
-  { num: 65803, name: 'Didymos' },
-  { num: 99942, name: 'Apophis' }
+  {
+    group: 'Brillants — Ceinture principale',
+    desc: 'Magnitude favorable, accessibles facilement au Seestar S50',
+    items: [
+      { num: 1,    name: 'Cérès' },
+      { num: 2,    name: 'Pallas' },
+      { num: 3,    name: 'Junon' },
+      { num: 4,    name: 'Vesta' },
+      { num: 6,    name: 'Hébé' },
+      { num: 7,    name: 'Iris' },
+      { num: 8,    name: 'Flore' },
+      { num: 9,    name: 'Métis' },
+      { num: 10,   name: 'Hygie' },
+      { num: 11,   name: 'Parthénope' },
+      { num: 12,   name: 'Victoria' },
+      { num: 14,   name: 'Irène' },
+      { num: 15,   name: 'Eunomie' },
+      { num: 18,   name: 'Melpomène' },
+      { num: 19,   name: 'Fortuna' },
+      { num: 20,   name: 'Massalia' },
+      { num: 22,   name: 'Calliope' },
+      { num: 27,   name: 'Euterpe' },
+      { num: 29,   name: 'Amphitrite' },
+      { num: 39,   name: 'Lætitia' },
+      { num: 40,   name: 'Harmonia' },
+      { num: 44,   name: 'Nysa' },
+      { num: 51,   name: 'Néméausa' },
+      { num: 52,   name: 'Europa' },
+      { num: 88,   name: 'Thisbé' },
+      { num: 89,   name: 'Julia' },
+      { num: 192,  name: 'Nausikaa' },
+      { num: 324,  name: 'Bamberga' },
+      { num: 354,  name: 'Eleonora' },
+      { num: 471,  name: 'Papagena' },
+      { num: 511,  name: 'Davida' },
+      { num: 704,  name: 'Interamnia' }
+    ]
+  },
+  {
+    group: 'Cibles de missions spatiales',
+    desc: 'Astéroïdes visités par des sondes, ou cibles confirmées',
+    items: [
+      { num: 16,     name: 'Psyché (Psyche)' },
+      { num: 21,     name: 'Lutetia (Rosetta)' },
+      { num: 243,    name: 'Ida (Galileo)' },
+      { num: 253,    name: 'Mathilde (NEAR)' },
+      { num: 433,    name: 'Eros (NEAR-Shoemaker)' },
+      { num: 617,    name: 'Patroclus (Lucy)' },
+      { num: 951,    name: 'Gaspra (Galileo)' },
+      { num: 2867,   name: 'Steins (Rosetta)' },
+      { num: 3548,   name: 'Eurybates (Lucy)' },
+      { num: 11351,  name: 'Leucus (Lucy)' },
+      { num: 15094,  name: 'Polymele (Lucy)' },
+      { num: 21900,  name: 'Orus (Lucy)' },
+      { num: 25143,  name: 'Itokawa (Hayabusa)' },
+      { num: 65803,  name: 'Didymos (DART)' },
+      { num: 101955, name: 'Bennu (OSIRIS-REx)' },
+      { num: 152830, name: 'Dinkinesh (Lucy)' },
+      { num: 162173, name: 'Ryugu (Hayabusa 2)' }
+    ]
+  },
+  {
+    group: 'Géocroiseurs (NEA)',
+    desc: 'Astéroïdes proches de la Terre, intéressants en photométrie',
+    items: [
+      { num: 1566,   name: 'Icarus' },
+      { num: 1620,   name: 'Geographos' },
+      { num: 1862,   name: 'Apollo' },
+      { num: 1866,   name: 'Sisyphus' },
+      { num: 3200,   name: 'Phaethon — parent Géminides' },
+      { num: 3753,   name: 'Cruithne — compagnon Terre' },
+      { num: 4179,   name: 'Toutatis' },
+      { num: 4660,   name: 'Nereus' },
+      { num: 6489,   name: 'Golevka' },
+      { num: 99942,  name: 'Apophis' }
+    ]
+  },
+  {
+    group: 'Planètes naines & TNO',
+    desc: 'Objets transneptuniens — magnitude faible, exigeants',
+    items: [
+      { num: 20000,  name: 'Varuna' },
+      { num: 28978,  name: 'Ixion' },
+      { num: 50000,  name: 'Quaoar' },
+      { num: 90377,  name: 'Sedna' },
+      { num: 134340, name: 'Pluton' },
+      { num: 136108, name: 'Haumea' },
+      { num: 136199, name: 'Eris' },
+      { num: 136472, name: 'Makemake' }
+    ]
+  },
+  {
+    group: 'Troyens & Centaures',
+    desc: 'Co-orbitaux de Jupiter et objets transitoires entre Jupiter et Neptune',
+    items: [
+      { num: 588,    name: 'Achilles — 1er Troyen' },
+      { num: 624,    name: 'Hektor — plus gros Troyen' },
+      { num: 911,    name: 'Agamemnon' },
+      { num: 1437,   name: 'Diomedes' },
+      { num: 1583,   name: 'Antilochus' },
+      { num: 2060,   name: 'Chiron — Centaure' },
+      { num: 5145,   name: 'Pholus — Centaure' },
+      { num: 10199,  name: 'Chariklo — Centaure à anneaux' }
+    ]
+  }
 ];
 
 const STATE_KEY = 'seestar-asteroids-v1';
@@ -1194,19 +1303,34 @@ $('#presetBtn').onclick = () => {
 function renderPresetCatalog() {
   const grid = $('#presetGrid');
   grid.innerHTML = '';
-  PRESET_CATALOG.forEach(p => {
-    const isAdded = state.targets.some(t => t.num === String(p.num));
-    const btn = document.createElement('button');
-    btn.className = 'preset-btn';
-    btn.style.opacity = isAdded ? '0.4' : '1';
-    btn.innerHTML = `<span class="pnum">#${p.num}</span>${p.name}${isAdded ? ' ✓' : ''}`;
-    btn.disabled = isAdded;
-    btn.onclick = () => {
-      addTarget(p.num, p.name);
-      showToast(`${p.name} ajouté`);
-      renderPresetCatalog();
-    };
-    grid.appendChild(btn);
+
+  PRESET_CATALOG.forEach((group, idx) => {
+    const header = document.createElement('div');
+    header.className = 'preset-group-header' + (idx === 0 ? ' first' : '');
+    header.textContent = group.group;
+    grid.appendChild(header);
+
+    if (group.desc) {
+      const desc = document.createElement('div');
+      desc.className = 'preset-group-desc';
+      desc.textContent = group.desc;
+      grid.appendChild(desc);
+    }
+
+    group.items.forEach(p => {
+      const isAdded = state.targets.some(t => t.num === String(p.num));
+      const btn = document.createElement('button');
+      btn.className = 'preset-btn';
+      btn.style.opacity = isAdded ? '0.4' : '1';
+      btn.innerHTML = `<span class="pnum">#${p.num}</span>${p.name}${isAdded ? ' ✓' : ''}`;
+      btn.disabled = isAdded;
+      btn.onclick = () => {
+        addTarget(p.num, p.name);
+        showToast(`${p.name} ajouté`);
+        renderPresetCatalog();
+      };
+      grid.appendChild(btn);
+    });
   });
 }
 
