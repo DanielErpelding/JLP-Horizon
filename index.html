@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Asteroid Bridge — Seestar</title>
+
+<!-- PWA / iOS -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Astéroïdes">
+<meta name="theme-color" content="#0B0F14">
+<meta name="mobile-web-app-capable" content="yes">
+
+<!-- Inline icon -->
+<link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='38' fill='%230B0F14'/><circle cx='90' cy='90' r='52' fill='none' stroke='%237DD3C0' stroke-width='3'/><circle cx='90' cy='90' r='4' fill='%237DD3C0'/><circle cx='128' cy='62' r='3' fill='%237DD3C0'/><circle cx='58' cy='118' r='2' fill='%237DD3C0'/><circle cx='130' cy='112' r='2.5' fill='%23E0A458'/><text x='90' y='160' text-anchor='middle' fill='%237A8898' font-family='monospace' font-size='14' font-weight='600'>AST</text></svg>">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='38' fill='%230B0F14'/><circle cx='90' cy='90' r='52' fill='none' stroke='%237DD3C0' stroke-width='3'/><circle cx='90' cy='90' r='4' fill='%237DD3C0'/></svg>">
+
+<!-- Manifest inline -->
+<link rel="manifest" href='data:application/manifest+json,{"name":"Asteroid Bridge","short_name":"Astéroïdes","start_url":".","display":"standalone","background_color":"%230B0F14","theme_color":"%230B0F14","icons":[{"src":"data:image/svg+xml;utf8,<svg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 180 180%27><rect width=%27180%27 height=%27180%27 rx=%2738%27 fill=%27%230B0F14%27/><circle cx=%2790%27 cy=%2790%27 r=%2752%27 fill=%27none%27 stroke=%27%237DD3C0%27 stroke-width=%273%27/><circle cx=%2790%27 cy=%2790%27 r=%274%27 fill=%27%237DD3C0%27/></svg>","sizes":"any","type":"image/svg+xml"}]}'>
+
+<style>
+  :root {
+    --bg:        #0B0F14;
+    --panel:    #141B22;
+    --panel-2:  #1A222B;
+    --border:   #1F2A36;
+    --text:     #D7E0EA;
+    --muted:    #7A8898;
+    --muted-2:  #4D5966;
+    --accent:   #7DD3C0;
+    --accent-d: #4A9588;
+    --warn:     #E0A458;
+    --error:    #C45A5A;
+    --ok:       #6BB28A;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", "Roboto Mono", Menlo, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.4; }
+  body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); min-height: 100vh; }
+
+  /* ===== Masthead / header ===== */
+  header.masthead {
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, #0E141A 0%, #0B0F14 100%);
+    padding: 14px 16px 12px;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .masthead-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .brand { font-family: var(--mono); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+  .brand .dot { display: inline-block; width: 6px; height: 6px; background: var(--accent); border-radius: 50%; margin-right: 6px; box-shadow: 0 0 8px var(--accent); vertical-align: 1px; animation: pulse 2.4s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+  .version { font-family: var(--mono); font-size: 10px; color: var(--muted-2); letter-spacing: 0.08em; }
+  h1 { font-size: 20px; font-weight: 600; margin: 6px 0 2px; letter-spacing: -0.01em; }
+  .subtitle { font-size: 12px; color: var(--muted); font-family: var(--mono); letter-spacing: 0.02em; }
+
+  /* ===== Status strip ===== */
+  .status-strip {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1px;
+    background: var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .status-cell {
+    background: var(--panel);
+    padding: 8px 12px;
+    font-family: var(--mono);
+  }
+  .status-label { font-size: 9px; color: var(--muted-2); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 2px; }
+  .status-value { font-size: 12px; color: var(--text); }
+  .status-cell.editable { cursor: pointer; }
+  .status-cell.editable:active { background: var(--panel-2); }
+
+  /* ===== Controls bar ===== */
+  .controls {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .controls::-webkit-scrollbar { display: none; }
+  button.ctl {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+  }
+  button.ctl:hover { border-color: var(--accent-d); }
+  button.ctl:active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+  button.ctl.primary { background: var(--accent-d); color: var(--bg); border-color: var(--accent-d); font-weight: 600; }
+  button.ctl.primary:active { background: var(--accent); border-color: var(--accent); }
+  button.ctl:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ===== Filter row ===== */
+  .filters {
+    display: flex;
+    gap: 12px;
+    padding: 10px 16px;
+    background: var(--panel-2);
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 11px;
+    flex-wrap: wrap;
+  }
+  .filter-item { display: flex; align-items: center; gap: 6px; color: var(--muted); }
+  .filter-item input {
+    width: 50px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 3px 6px;
+    border-radius: 3px;
+    text-align: right;
+  }
+  .filter-item input:focus { outline: none; border-color: var(--accent); }
+  .filter-item .unit { color: var(--muted-2); font-size: 10px; }
+
+  /* ===== Target list ===== */
+  main { padding-bottom: 80px; }
+  .empty {
+    padding: 60px 32px;
+    text-align: center;
+    color: var(--muted);
+  }
+  .empty .icon { font-size: 40px; margin-bottom: 12px; opacity: 0.4; }
+  .target-list { border-bottom: 1px solid var(--border); }
+  .target {
+    display: grid;
+    grid-template-columns: 14px 1fr auto;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+    transition: background 0.2s;
+  }
+  .target.below { opacity: 0.45; }
+  .target.expanded { background: var(--panel); }
+
+  /* LED indicator */
+  .led {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--muted-2);
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.4) inset;
+    flex-shrink: 0;
+    transition: all 0.3s;
+  }
+  .led.ok      { background: var(--ok);    box-shadow: 0 0 6px var(--ok),    0 0 0 1px rgba(0,0,0,0.4) inset; }
+  .led.warn    { background: var(--warn);  box-shadow: 0 0 6px var(--warn),  0 0 0 1px rgba(0,0,0,0.4) inset; }
+  .led.error   { background: var(--error); box-shadow: 0 0 6px var(--error), 0 0 0 1px rgba(0,0,0,0.4) inset; }
+  .led.loading { background: var(--accent); animation: blink 0.8s infinite; }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  .target-main { min-width: 0; cursor: pointer; }
+  .target-line1 { display: flex; align-items: baseline; gap: 8px; }
+  .target-num { font-family: var(--mono); font-size: 11px; color: var(--muted-2); letter-spacing: 0.05em; }
+  .target-name { font-weight: 500; font-size: 15px; color: var(--text); }
+  .target-line2 { display: flex; gap: 14px; margin-top: 4px; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+  .target-line2 .v { color: var(--text); }
+  .target-line2 .v.warn  { color: var(--warn);  }
+  .target-line2 .v.error { color: var(--error); }
+  .target-line2 .lbl { color: var(--muted-2); font-size: 10px; letter-spacing: 0.05em; text-transform: uppercase; }
+
+  .target-actions { display: flex; gap: 4px; }
+  .icon-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    width: 32px; height: 32px;
+    border-radius: 4px;
+    display: grid; place-items: center;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.15s;
+  }
+  .icon-btn:active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+  .icon-btn.copied { background: var(--ok); color: var(--bg); border-color: var(--ok); }
+
+  /* Expanded detail */
+  .target-detail {
+    grid-column: 1 / -1;
+    padding: 14px 0 4px;
+    border-top: 1px dashed var(--border);
+    margin-top: 12px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+  .detail-row { display: flex; flex-direction: column; gap: 2px; }
+  .detail-row .lbl { font-size: 9px; color: var(--muted-2); text-transform: uppercase; letter-spacing: 0.1em; }
+  .detail-row .val { color: var(--text); }
+  .detail-row.full { grid-column: 1 / -1; }
+  .detail-row .copy-inline {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    border-radius: 3px;
+    color: var(--accent);
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    cursor: pointer;
+    margin-top: 2px;
+  }
+  .detail-row .copy-inline:active { background: var(--accent); color: var(--bg); }
+  .detail-row .copy-inline.copied { background: var(--ok); color: var(--bg); border-color: var(--ok); }
+  .detail-actions { grid-column: 1 / -1; display: flex; gap: 6px; padding-top: 8px; }
+  .detail-actions button {
+    flex: 1;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 8px;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  .detail-actions button:active { background: var(--error); color: var(--bg); border-color: var(--error); }
+
+  /* ===== Modal ===== */
+  .modal-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75);
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 100;
+    padding: 20px;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px 12px 0 0;
+    width: 100%;
+    max-width: 480px;
+    padding: 18px;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  }
+  .modal h2 {
+    font-size: 13px;
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    margin: 0 0 14px;
+    font-weight: 600;
+  }
+  .modal label {
+    display: block;
+    font-size: 11px;
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin: 10px 0 4px;
+  }
+  .modal input[type="text"], .modal input[type="number"], .modal input[type="datetime-local"] {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 14px;
+    padding: 9px 11px;
+    border-radius: 4px;
+  }
+  .modal input:focus { outline: none; border-color: var(--accent); }
+  .modal .help {
+    font-size: 11px;
+    color: var(--muted-2);
+    margin: 4px 0 0;
+    font-family: var(--mono);
+    line-height: 1.5;
+  }
+  .modal-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .modal-actions button { flex: 1; }
+
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+  /* ===== Toast ===== */
+  .toast {
+    position: fixed;
+    bottom: calc(20px + env(safe-area-inset-bottom));
+    left: 50%;
+    transform: translateX(-50%) translateY(120px);
+    background: var(--panel);
+    border: 1px solid var(--accent);
+    color: var(--text);
+    padding: 10px 16px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 12px;
+    z-index: 200;
+    transition: transform 0.25s ease;
+    box-shadow: 0 0 24px rgba(125, 211, 192, 0.15);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.error { border-color: var(--error); }
+
+  /* ===== Help ===== */
+  .help-block {
+    padding: 16px;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  .help-block code {
+    background: var(--bg);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+  }
+  .help-block h3 {
+    font-size: 11px;
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    margin: 14px 0 6px;
+  }
+
+  /* Catalog presets */
+  .preset-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 8px; }
+  .preset-btn {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    text-align: left;
+    padding: 8px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+  .preset-btn:active { background: var(--accent); color: var(--bg); }
+  .preset-btn .pnum { color: var(--accent); margin-right: 6px; }
+
+  /* Source mode tabs */
+  .tab-row { display: flex; gap: 4px; margin-bottom: 10px; }
+  .tab {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+  .tab.active { background: var(--accent-d); color: var(--bg); border-color: var(--accent-d); }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-row">
+    <span class="brand"><span class="dot"></span>ASTEROID BRIDGE</span>
+    <span class="version" id="versionTag">v1.0 · JPL-HORIZONS</span>
+  </div>
+  <h1>Éphémérides pour Seestar</h1>
+  <div class="subtitle">RA/Dec topocentriques · format My Favorites</div>
+</header>
+
+<div class="status-strip">
+  <div class="status-cell editable" id="siteCell">
+    <div class="status-label">Site</div>
+    <div class="status-value" id="siteDisplay">--</div>
+  </div>
+  <div class="status-cell editable" id="timeCell">
+    <div class="status-label">UT</div>
+    <div class="status-value" id="timeDisplay">--</div>
+  </div>
+  <div class="status-cell">
+    <div class="status-label">Cibles</div>
+    <div class="status-value" id="countDisplay">0 / 0</div>
+  </div>
+</div>
+
+<div class="controls">
+  <button class="ctl primary" id="refreshBtn">↻ Calculer</button>
+  <button class="ctl" id="addBtn">+ Cible</button>
+  <button class="ctl" id="presetBtn">Catalogue</button>
+  <button class="ctl" id="helpBtn">?</button>
+</div>
+
+<div class="filters">
+  <div class="filter-item">
+    <span>Hauteur min</span>
+    <input type="number" id="minAlt" min="-10" max="89" step="1" value="10">
+    <span class="unit">°</span>
+  </div>
+  <div class="filter-item">
+    <span>Mag max</span>
+    <input type="number" id="maxMag" min="0" max="25" step="0.5" value="15">
+  </div>
+  <div class="filter-item">
+    <label><input type="checkbox" id="hideBelow" checked> masquer sous horizon</label>
+  </div>
+</div>
+
+<main>
+  <div class="target-list" id="targetList"></div>
+  <div class="empty" id="emptyState" style="display:none;">
+    <div class="icon">⊙</div>
+    <div>Aucune cible. Ajoute-en via <strong>+ Cible</strong> ou <strong>Catalogue</strong>.</div>
+  </div>
+</main>
+
+<!-- ============ MODAL: Site config ============ -->
+<div class="modal-backdrop" id="siteModal">
+  <div class="modal">
+    <h2>Site d'observation</h2>
+    <div class="tab-row">
+      <div class="tab active" data-mode="auto">Géolocalisation</div>
+      <div class="tab" data-mode="manual">Manuel</div>
+      <div class="tab" data-mode="preset">Préréglés</div>
+    </div>
+
+    <div id="siteAuto">
+      <p class="help">Utilise la position du téléphone (précision GPS).</p>
+      <button class="ctl primary" id="getLocBtn" style="width:100%">📍 Obtenir ma position</button>
+      <p class="help" id="locStatus" style="margin-top:8px;"></p>
+    </div>
+
+    <div id="siteManual" style="display:none;">
+      <div class="row3">
+        <div>
+          <label>Latitude</label>
+          <input type="number" id="manualLat" step="0.0001" placeholder="43.5300">
+        </div>
+        <div>
+          <label>Longitude</label>
+          <input type="number" id="manualLon" step="0.0001" placeholder="1.3500">
+        </div>
+        <div>
+          <label>Alt (m)</label>
+          <input type="number" id="manualAlt" step="1" placeholder="150">
+        </div>
+      </div>
+      <p class="help">Longitude positive vers l'EST (Greenwich = 0). Altitude en mètres au-dessus de l'ellipsoïde.</p>
+    </div>
+
+    <div id="sitePreset" style="display:none;">
+      <p class="help">Sites préenregistrés.</p>
+      <div class="preset-grid" id="sitePresetGrid"></div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="ctl" data-close="siteModal">Annuler</button>
+      <button class="ctl primary" id="saveSiteBtn">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: Time config ============ -->
+<div class="modal-backdrop" id="timeModal">
+  <div class="modal">
+    <h2>Instant de calcul</h2>
+    <p class="help">L'éphéméride sera calculée pour cet instant précis. Toutes les heures sont en UT (temps universel).</p>
+    <label>Mode</label>
+    <div class="tab-row">
+      <div class="tab active" data-time-mode="now">Maintenant</div>
+      <div class="tab" data-time-mode="custom">Instant choisi</div>
+    </div>
+    <div id="customTime" style="display:none;">
+      <label>Date & heure (locale, convertie en UT)</label>
+      <input type="datetime-local" id="customDateTime">
+    </div>
+    <div class="modal-actions">
+      <button class="ctl" data-close="timeModal">Annuler</button>
+      <button class="ctl primary" id="saveTimeBtn">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: Add target ============ -->
+<div class="modal-backdrop" id="addModal">
+  <div class="modal">
+    <h2>Ajouter une cible</h2>
+    <label>Numéro de l'astéroïde (IAU)</label>
+    <input type="text" id="addNumber" placeholder="ex: 4, 15094, 99942">
+    <p class="help">Numéro Minor Planet Center officiel. <code>4</code> = Vesta, <code>15094</code> = Polymele, <code>99942</code> = Apophis.</p>
+    <label>Nom (optionnel)</label>
+    <input type="text" id="addName" placeholder="laisser vide pour récupérer auto">
+    <div class="modal-actions">
+      <button class="ctl" data-close="addModal">Annuler</button>
+      <button class="ctl primary" id="confirmAddBtn">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: Preset catalog ============ -->
+<div class="modal-backdrop" id="presetModal">
+  <div class="modal">
+    <h2>Catalogue rapide</h2>
+    <p class="help">Touche un astéroïde pour l'ajouter à ta liste.</p>
+    <div class="preset-grid" id="presetGrid"></div>
+    <div class="modal-actions">
+      <button class="ctl" data-close="presetModal">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: Help ============ -->
+<div class="modal-backdrop" id="helpModal">
+  <div class="modal">
+    <h2>Comment utiliser</h2>
+    <div class="help-block" style="padding:0">
+      <h3>Workflow</h3>
+      <ol style="padding-left:18px; margin:6px 0;">
+        <li>Configurer le site (LED haut-gauche).</li>
+        <li>Régler l'instant (LED haut-milieu) — défaut "maintenant".</li>
+        <li>Ajouter des cibles via <code>+ Cible</code> ou <code>Catalogue</code>.</li>
+        <li>Touche <code>↻ Calculer</code> pour rafraîchir les éphémérides.</li>
+        <li>Touche une ligne pour voir les détails et copier les coordonnées.</li>
+        <li>Dans le Seestar : SkyAtlas → Objects → My Favorites → More → Customize → coller RA et Dec.</li>
+      </ol>
+
+      <h3>Code LED</h3>
+      <ul style="padding-left:18px; margin:6px 0;">
+        <li><span class="led ok" style="display:inline-block;vertical-align:middle;margin-right:6px;"></span>Hauteur ≥ 30° et magnitude OK</li>
+        <li><span class="led warn" style="display:inline-block;vertical-align:middle;margin-right:6px;"></span>Hauteur entre seuil min et 30°</li>
+        <li><span class="led error" style="display:inline-block;vertical-align:middle;margin-right:6px;"></span>Trop faible (magnitude > seuil)</li>
+        <li><span class="led" style="display:inline-block;vertical-align:middle;margin-right:6px;"></span>Sous l'horizon</li>
+      </ul>
+
+      <h3>Installation en tant qu'app iOS</h3>
+      <p style="margin:6px 0;">Ouvre cette page dans <strong>Safari</strong> → bouton Partager → <strong>Sur l'écran d'accueil</strong>. L'app s'ouvre ensuite en plein écran sans barre Safari.</p>
+
+      <h3>Hébergement</h3>
+      <p style="margin:6px 0;">GitHub Pages, Netlify, ou n'importe quel hébergeur HTTPS. La géolocalisation et le PWA nécessitent HTTPS.</p>
+
+      <h3>Source des éphémérides</h3>
+      <p style="margin:6px 0;">JPL Horizons API (<code>ssd.jpl.nasa.gov</code>). Précision sub-arcseconde pour les astéroïdes numérotés. Coordonnées astrométriques ICRF/J2000 — directement compatibles avec le Seestar.</p>
+    </div>
+    <div class="modal-actions">
+      <button class="ctl primary" data-close="helpModal">Compris</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+/* ============================================================
+   STATE & PERSISTENCE
+   ============================================================ */
+const DEFAULT_SITE_PRESETS = [
+  { name: 'Cugnaux (FR)',          lat: 43.5345, lon:  1.3445, alt: 165 },
+  { name: 'Bélesta-en-Lauragais',  lat: 43.4660, lon:  1.8320, alt: 250 },
+  { name: 'Pic du Midi',           lat: 42.9369, lon:  0.1411, alt: 2870 },
+  { name: 'Greenwich',             lat: 51.4779, lon:  0.0015, alt: 46 }
+];
+
+const PRESET_CATALOG = [
+  { num: 1,     name: 'Cérès' },
+  { num: 2,     name: 'Pallas' },
+  { num: 3,     name: 'Junon' },
+  { num: 4,     name: 'Vesta' },
+  { num: 6,     name: 'Hébé' },
+  { num: 7,     name: 'Iris' },
+  { num: 8,     name: 'Flore' },
+  { num: 10,    name: 'Hygie' },
+  { num: 15,    name: 'Eunomie' },
+  { num: 16,    name: 'Psyché' },
+  { num: 21,    name: 'Lutetia' },
+  { num: 433,   name: 'Eros' },
+  { num: 1036,  name: 'Ganymed' },
+  { num: 4179,  name: 'Toutatis' },
+  { num: 15094, name: 'Polymele' },
+  { num: 65803, name: 'Didymos' },
+  { num: 99942, name: 'Apophis' }
+];
+
+const STATE_KEY = 'seestar-asteroids-v1';
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STATE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch { return null; }
+}
+function saveState() {
+  try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch {}
+}
+
+const state = loadState() || {
+  site: { name: 'Cugnaux (FR)', lat: 43.5345, lon: 1.3445, alt: 165 },
+  timeMode: 'now',
+  customTime: null,
+  targets: [],
+  filters: { minAlt: 10, maxMag: 15, hideBelow: true }
+};
+
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+function $(sel) { return document.querySelector(sel); }
+function $$(sel) { return Array.from(document.querySelectorAll(sel)); }
+
+function pad(n, w) { return String(Math.trunc(n)).padStart(w, '0'); }
+function fmtRA(ra) {
+  // ra in 'HH MM SS.ss' format from Horizons — pass through, but normalize
+  if (!ra) return '--';
+  return ra.trim();
+}
+function fmtDec(dec) {
+  if (!dec) return '--';
+  return dec.trim();
+}
+function fmtSiteShort(s) {
+  if (!s) return '--';
+  if (s.name) return s.name;
+  return `${s.lat.toFixed(2)}°, ${s.lon.toFixed(2)}°`;
+}
+function nowUTString() {
+  const d = new Date();
+  return d.toISOString().slice(0, 16).replace('T', ' ') + 'Z';
+}
+function currentDateForQuery() {
+  if (state.timeMode === 'now' || !state.customTime) return new Date();
+  return new Date(state.customTime);
+}
+function toHorizonsTime(d) {
+  // YYYY-MM-DD HH:MM
+  const y = d.getUTCFullYear();
+  const mo = pad(d.getUTCMonth() + 1, 2);
+  const da = pad(d.getUTCDate(), 2);
+  const h = pad(d.getUTCHours(), 2);
+  const mi = pad(d.getUTCMinutes(), 2);
+  return `${y}-${mo}-${da} ${h}:${mi}`;
+}
+function plus1Min(d) {
+  return new Date(d.getTime() + 60_000);
+}
+
+function showToast(msg, isError) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.toggle('error', !!isError);
+  t.classList.add('show');
+  clearTimeout(showToast._tm);
+  showToast._tm = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function copyText(text, btnEl) {
+  navigator.clipboard.writeText(text).then(() => {
+    if (btnEl) {
+      btnEl.classList.add('copied');
+      setTimeout(() => btnEl.classList.remove('copied'), 1200);
+    }
+    showToast('Copié : ' + text);
+  }).catch(() => showToast('Erreur copie', true));
+}
+
+/* ============================================================
+   JPL HORIZONS API
+   ============================================================ */
+async function fetchEphemeris(asteroidNum, when, site) {
+  const start = toHorizonsTime(when);
+  const stop = toHorizonsTime(plus1Min(when));
+  // Note: longitude is east-positive in Horizons SITE_COORD; altitude in km
+  const siteCoord = `${site.lon.toFixed(5)},${site.lat.toFixed(5)},${(site.alt/1000).toFixed(4)}`;
+
+  const params = new URLSearchParams({
+    format: 'text',
+    COMMAND: `'${asteroidNum};'`,
+    OBJ_DATA: "'NO'",
+    MAKE_EPHEM: "'YES'",
+    EPHEM_TYPE: "'OBSERVER'",
+    CENTER: "'coord@399'",
+    COORD_TYPE: "'GEODETIC'",
+    SITE_COORD: `'${siteCoord}'`,
+    START_TIME: `'${start}'`,
+    STOP_TIME: `'${stop}'`,
+    STEP_SIZE: "'1m'",
+    QUANTITIES: "'1,4,9'",
+    REF_SYSTEM: "'ICRF'",
+    CAL_FORMAT: "'CAL'",
+    TIME_DIGITS: "'MINUTES'",
+    ANG_FORMAT: "'HMS'",
+    APPARENT: "'AIRLESS'",
+    RANGE_UNITS: "'AU'",
+    SUPPRESS_RANGE_RATE: "'NO'",
+    SKIP_DAYLT: "'NO'",
+    EXTRA_PREC: "'NO'",
+    CSV_FORMAT: "'NO'"
+  });
+
+  const url = `https://ssd.jpl.nasa.gov/api/horizons.api?${params.toString()}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const txt = await res.text();
+  return parseHorizonsResponse(txt);
+}
+
+function parseHorizonsResponse(txt) {
+  // Look for $$SOE ... $$EOE
+  const soeIdx = txt.indexOf('$$SOE');
+  const eoeIdx = txt.indexOf('$$EOE');
+  if (soeIdx < 0 || eoeIdx < 0) {
+    // Check for "Target body name" to extract official name; check for No matches found
+    if (/No matches found/i.test(txt) || /Target SPK|specify which/i.test(txt)) {
+      throw new Error('Astéroïde introuvable');
+    }
+    throw new Error('Format Horizons inattendu');
+  }
+  const block = txt.slice(soeIdx + 5, eoeIdx).trim();
+  const firstLine = block.split('\n').find(l => l.trim().length > 0);
+  if (!firstLine) throw new Error('Pas de données');
+
+  // Pattern: date time [flags] RA(3) Dec(sign+3) Az Alt mag sbrt
+  // We capture: 3 RA tokens, 3 Dec tokens, Az, Alt, mag
+  const re = /(\d{2})\s+(\d{2})\s+(\d{2}(?:\.\d+)?)\s+([+\-]\d{2})\s+(\d{2})\s+(\d{2}(?:\.\d+)?)\s+([\d.]+)\s+([+\-]?[\d.]+)\s+(n\.a\.|[\d.+\-]+)/;
+  const m = firstLine.match(re);
+  if (!m) throw new Error('Ligne non parsée');
+
+  const raH = m[1], raM = m[2], raS = m[3];
+  const decD = m[4], decM = m[5], decS = m[6];
+  const az = parseFloat(m[7]);
+  const alt = parseFloat(m[8]);
+  const magRaw = m[9];
+  const mag = magRaw === 'n.a.' ? null : parseFloat(magRaw);
+
+  // Extract target name from header
+  let officialName = '';
+  const nameMatch = txt.match(/Target body name:\s*([^\n{]+)/);
+  if (nameMatch) officialName = nameMatch[1].trim();
+
+  return {
+    raStr: `${raH} ${raM} ${raS}`,
+    decStr: `${decD} ${decM} ${decS}`,
+    az, alt, mag,
+    officialName
+  };
+}
+
+/* ============================================================
+   RENDERING
+   ============================================================ */
+function updateStatusBar() {
+  $('#siteDisplay').textContent = fmtSiteShort(state.site);
+  if (state.timeMode === 'now') {
+    $('#timeDisplay').textContent = 'Temps réel';
+  } else if (state.customTime) {
+    const d = new Date(state.customTime);
+    $('#timeDisplay').textContent = toHorizonsTime(d).replace(' ', '·') + 'Z';
+  } else {
+    $('#timeDisplay').textContent = 'Temps réel';
+  }
+  const visible = state.targets.filter(t => {
+    if (!t.eph) return true;
+    if (state.filters.hideBelow && t.eph.alt < 0) return false;
+    return true;
+  }).length;
+  $('#countDisplay').textContent = `${visible} / ${state.targets.length}`;
+}
+
+function ledClassFor(t) {
+  if (!t.eph) return t._loading ? 'loading' : '';
+  const alt = t.eph.alt;
+  const mag = t.eph.mag;
+  const minAlt = state.filters.minAlt;
+  const maxMag = state.filters.maxMag;
+  if (alt < 0) return '';
+  if (alt < minAlt) return 'warn';
+  if (mag !== null && mag > maxMag) return 'error';
+  if (alt < 30) return 'warn';
+  return 'ok';
+}
+
+function renderList() {
+  const list = $('#targetList');
+  const empty = $('#emptyState');
+
+  if (state.targets.length === 0) {
+    list.innerHTML = '';
+    empty.style.display = 'block';
+    updateStatusBar();
+    return;
+  }
+  empty.style.display = 'none';
+
+  list.innerHTML = '';
+  state.targets.forEach((t, i) => {
+    const row = document.createElement('div');
+    row.className = 'target';
+    if (t.eph && t.eph.alt < 0 && state.filters.hideBelow) row.style.display = 'none';
+    if (t.eph && t.eph.alt < 0) row.classList.add('below');
+    if (t._expanded) row.classList.add('expanded');
+
+    const led = document.createElement('div');
+    led.className = 'led ' + ledClassFor(t);
+
+    const main = document.createElement('div');
+    main.className = 'target-main';
+    main.onclick = () => {
+      t._expanded = !t._expanded;
+      renderList();
+    };
+
+    const line1 = document.createElement('div');
+    line1.className = 'target-line1';
+    line1.innerHTML = `<span class="target-num">#${t.num}</span><span class="target-name">${t.name || '...'}</span>`;
+    main.appendChild(line1);
+
+    const line2 = document.createElement('div');
+    line2.className = 'target-line2';
+    if (t._loading) {
+      line2.innerHTML = `<span style="color:var(--accent);">calcul…</span>`;
+    } else if (t._error) {
+      line2.innerHTML = `<span class="v error">${t._error}</span>`;
+    } else if (t.eph) {
+      const altClass = t.eph.alt < state.filters.minAlt ? (t.eph.alt < 0 ? 'error' : 'warn') : '';
+      const magStr = t.eph.mag === null ? '—' : t.eph.mag.toFixed(1);
+      const magClass = (t.eph.mag !== null && t.eph.mag > state.filters.maxMag) ? 'error' : '';
+      line2.innerHTML = `
+        <span><span class="lbl">Alt</span> <span class="v ${altClass}">${t.eph.alt.toFixed(1)}°</span></span>
+        <span><span class="lbl">Az</span> <span class="v">${t.eph.az.toFixed(0)}°</span></span>
+        <span><span class="lbl">Mag</span> <span class="v ${magClass}">${magStr}</span></span>
+      `;
+    } else {
+      line2.innerHTML = `<span style="color:var(--muted-2);">non calculé</span>`;
+    }
+    main.appendChild(line2);
+
+    const actions = document.createElement('div');
+    actions.className = 'target-actions';
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'icon-btn';
+    copyBtn.innerHTML = '⧉';
+    copyBtn.title = 'Copier RA';
+    copyBtn.onclick = (e) => {
+      e.stopPropagation();
+      if (!t.eph) { showToast('Calcule d\'abord', true); return; }
+      copyText(t.eph.raStr, copyBtn);
+    };
+    actions.appendChild(copyBtn);
+
+    row.appendChild(led);
+    row.appendChild(main);
+    row.appendChild(actions);
+
+    if (t._expanded) {
+      const detail = document.createElement('div');
+      detail.className = 'target-detail';
+      if (t.eph) {
+        detail.innerHTML = `
+          <div class="detail-row full">
+            <span class="lbl">Right Ascension (J2000)</span>
+            <div class="copy-inline" data-copy="${t.eph.raStr}">
+              <span>${t.eph.raStr}</span><span>⧉ copier</span>
+            </div>
+          </div>
+          <div class="detail-row full">
+            <span class="lbl">Declination (J2000)</span>
+            <div class="copy-inline" data-copy="${t.eph.decStr}">
+              <span>${t.eph.decStr}</span><span>⧉ copier</span>
+            </div>
+          </div>
+          <div class="detail-row">
+            <span class="lbl">Altitude</span>
+            <span class="val">${t.eph.alt.toFixed(2)}°</span>
+          </div>
+          <div class="detail-row">
+            <span class="lbl">Azimut</span>
+            <span class="val">${t.eph.az.toFixed(2)}°</span>
+          </div>
+          <div class="detail-row">
+            <span class="lbl">Magnitude V</span>
+            <span class="val">${t.eph.mag === null ? '—' : t.eph.mag.toFixed(2)}</span>
+          </div>
+          <div class="detail-row">
+            <span class="lbl">Calculé à</span>
+            <span class="val">${t.eph.calcTime || '--'}</span>
+          </div>
+          <div class="detail-actions">
+            <button onclick="recalcOne('${t.id}')">Recalculer</button>
+            <button onclick="removeTarget('${t.id}')">Supprimer</button>
+          </div>
+        `;
+      } else {
+        detail.innerHTML = `
+          <div class="detail-row full">
+            <span class="val" style="color:var(--muted);">Aucune éphéméride calculée. Touche <strong>↻ Calculer</strong> pour la générer.</span>
+          </div>
+          <div class="detail-actions">
+            <button onclick="recalcOne('${t.id}')">Calculer</button>
+            <button onclick="removeTarget('${t.id}')">Supprimer</button>
+          </div>
+        `;
+      }
+      row.appendChild(detail);
+    }
+
+    list.appendChild(row);
+  });
+
+  // Wire copy-inline buttons
+  $$('.copy-inline').forEach(el => {
+    el.onclick = (e) => {
+      e.stopPropagation();
+      copyText(el.dataset.copy, el);
+    };
+  });
+
+  updateStatusBar();
+}
+
+/* ============================================================
+   ACTIONS
+   ============================================================ */
+function genId() { return Math.random().toString(36).slice(2, 10); }
+
+function addTarget(num, name) {
+  num = String(num).trim();
+  if (!num) return;
+  if (state.targets.some(t => t.num === num)) {
+    showToast('Déjà présent', true); return;
+  }
+  state.targets.push({
+    id: genId(),
+    num,
+    name: name || '',
+    eph: null
+  });
+  saveState();
+  renderList();
+}
+
+window.removeTarget = function(id) {
+  state.targets = state.targets.filter(t => t.id !== id);
+  saveState();
+  renderList();
+};
+
+window.recalcOne = async function(id) {
+  const t = state.targets.find(x => x.id === id);
+  if (!t) return;
+  await computeFor([t]);
+};
+
+async function computeFor(targets) {
+  const when = currentDateForQuery();
+  const site = state.site;
+  const calcTime = toHorizonsTime(when) + 'Z';
+
+  for (const t of targets) {
+    t._loading = true;
+    t._error = null;
+  }
+  renderList();
+
+  await Promise.all(targets.map(async (t) => {
+    try {
+      const eph = await fetchEphemeris(t.num, when, site);
+      t.eph = { ...eph, calcTime };
+      if (!t.name && eph.officialName) t.name = eph.officialName;
+      t._error = null;
+    } catch (e) {
+      t._error = e.message || 'Erreur';
+      t.eph = null;
+    } finally {
+      t._loading = false;
+    }
+  }));
+  saveState();
+  renderList();
+}
+
+async function refreshAll() {
+  if (state.targets.length === 0) { showToast('Pas de cibles', true); return; }
+  const btn = $('#refreshBtn');
+  btn.disabled = true; btn.textContent = '⋯ Calcul…';
+  try {
+    await computeFor(state.targets);
+    showToast('Éphémérides à jour');
+  } finally {
+    btn.disabled = false; btn.textContent = '↻ Calculer';
+  }
+}
+
+/* ============================================================
+   MODAL MANAGEMENT
+   ============================================================ */
+function openModal(id) { $('#' + id).classList.add('open'); }
+function closeModal(id) { $('#' + id).classList.remove('open'); }
+$$('[data-close]').forEach(b => b.onclick = () => closeModal(b.dataset.close));
+
+/* Site modal */
+$('#siteCell').onclick = () => {
+  openModal('siteModal');
+  $('#locStatus').textContent = '';
+  // Prefill manual fields
+  $('#manualLat').value = state.site.lat ?? '';
+  $('#manualLon').value = state.site.lon ?? '';
+  $('#manualAlt').value = state.site.alt ?? '';
+};
+
+let siteMode = 'auto';
+$$('[data-mode]').forEach(tab => {
+  tab.onclick = () => {
+    $$('[data-mode]').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    siteMode = tab.dataset.mode;
+    $('#siteAuto').style.display = siteMode === 'auto' ? 'block' : 'none';
+    $('#siteManual').style.display = siteMode === 'manual' ? 'block' : 'none';
+    $('#sitePreset').style.display = siteMode === 'preset' ? 'block' : 'none';
+  };
+});
+
+let pendingSite = null;
+$('#getLocBtn').onclick = () => {
+  if (!navigator.geolocation) {
+    $('#locStatus').textContent = 'Géolocalisation indisponible'; return;
+  }
+  $('#locStatus').textContent = 'Acquisition…';
+  navigator.geolocation.getCurrentPosition(pos => {
+    pendingSite = {
+      name: 'Position actuelle',
+      lat: pos.coords.latitude,
+      lon: pos.coords.longitude,
+      alt: pos.coords.altitude || 0
+    };
+    $('#locStatus').textContent = `OK · ${pendingSite.lat.toFixed(4)}, ${pendingSite.lon.toFixed(4)} (±${Math.round(pos.coords.accuracy)}m)`;
+  }, err => {
+    $('#locStatus').textContent = 'Erreur : ' + err.message;
+  }, { enableHighAccuracy: true, timeout: 10000 });
+};
+
+// Populate site presets
+function renderSitePresets() {
+  const grid = $('#sitePresetGrid');
+  grid.innerHTML = '';
+  DEFAULT_SITE_PRESETS.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'preset-btn';
+    btn.innerHTML = `<strong>${p.name}</strong><br><span style="color:var(--muted-2);font-size:10px;">${p.lat.toFixed(2)}°, ${p.lon.toFixed(2)}°</span>`;
+    btn.onclick = () => {
+      pendingSite = { ...p };
+      $$('.preset-btn').forEach(b => b.style.borderColor = '');
+      btn.style.borderColor = 'var(--accent)';
+    };
+    grid.appendChild(btn);
+  });
+}
+
+$('#saveSiteBtn').onclick = () => {
+  let newSite = null;
+  if (siteMode === 'auto') {
+    if (!pendingSite) { showToast('Acquiers d\'abord la position', true); return; }
+    newSite = pendingSite;
+  } else if (siteMode === 'manual') {
+    const lat = parseFloat($('#manualLat').value);
+    const lon = parseFloat($('#manualLon').value);
+    const alt = parseFloat($('#manualAlt').value) || 0;
+    if (isNaN(lat) || isNaN(lon)) { showToast('Coordonnées invalides', true); return; }
+    newSite = { name: 'Site personnalisé', lat, lon, alt };
+  } else if (siteMode === 'preset') {
+    if (!pendingSite) { showToast('Sélectionne un site', true); return; }
+    newSite = pendingSite;
+  }
+  state.site = newSite;
+  pendingSite = null;
+  saveState();
+  updateStatusBar();
+  closeModal('siteModal');
+  showToast('Site enregistré');
+};
+
+/* Time modal */
+$('#timeCell').onclick = () => {
+  openModal('timeModal');
+  // Set tab
+  $$('[data-time-mode]').forEach(t => t.classList.toggle('active', t.dataset.timeMode === state.timeMode));
+  $('#customTime').style.display = state.timeMode === 'custom' ? 'block' : 'none';
+  if (state.customTime) {
+    const d = new Date(state.customTime);
+    // Convert to local for the input
+    const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+    $('#customDateTime').value = local.toISOString().slice(0, 16);
+  } else {
+    const now = new Date();
+    const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+    $('#customDateTime').value = local.toISOString().slice(0, 16);
+  }
+};
+
+let pendingTimeMode = state.timeMode;
+$$('[data-time-mode]').forEach(tab => {
+  tab.onclick = () => {
+    $$('[data-time-mode]').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    pendingTimeMode = tab.dataset.timeMode;
+    $('#customTime').style.display = pendingTimeMode === 'custom' ? 'block' : 'none';
+  };
+});
+
+$('#saveTimeBtn').onclick = () => {
+  state.timeMode = pendingTimeMode;
+  if (pendingTimeMode === 'custom') {
+    const v = $('#customDateTime').value;
+    if (v) {
+      state.customTime = new Date(v).toISOString();
+    }
+  } else {
+    state.customTime = null;
+  }
+  saveState();
+  updateStatusBar();
+  closeModal('timeModal');
+  showToast('Instant enregistré');
+};
+
+/* Add modal */
+$('#addBtn').onclick = () => {
+  $('#addNumber').value = '';
+  $('#addName').value = '';
+  openModal('addModal');
+  setTimeout(() => $('#addNumber').focus(), 100);
+};
+$('#confirmAddBtn').onclick = () => {
+  const num = $('#addNumber').value.trim();
+  const name = $('#addName').value.trim();
+  if (!num || !/^\d+$/.test(num)) { showToast('Numéro invalide', true); return; }
+  addTarget(num, name);
+  closeModal('addModal');
+};
+
+/* Preset modal */
+$('#presetBtn').onclick = () => {
+  openModal('presetModal');
+  renderPresetCatalog();
+};
+function renderPresetCatalog() {
+  const grid = $('#presetGrid');
+  grid.innerHTML = '';
+  PRESET_CATALOG.forEach(p => {
+    const isAdded = state.targets.some(t => t.num === String(p.num));
+    const btn = document.createElement('button');
+    btn.className = 'preset-btn';
+    btn.style.opacity = isAdded ? '0.4' : '1';
+    btn.innerHTML = `<span class="pnum">#${p.num}</span>${p.name}${isAdded ? ' ✓' : ''}`;
+    btn.disabled = isAdded;
+    btn.onclick = () => {
+      addTarget(p.num, p.name);
+      showToast(`${p.name} ajouté`);
+      renderPresetCatalog();
+    };
+    grid.appendChild(btn);
+  });
+}
+
+/* Help modal */
+$('#helpBtn').onclick = () => openModal('helpModal');
+
+/* Refresh */
+$('#refreshBtn').onclick = refreshAll;
+
+/* Filter inputs */
+$('#minAlt').value = state.filters.minAlt;
+$('#maxMag').value = state.filters.maxMag;
+$('#hideBelow').checked = state.filters.hideBelow;
+$('#minAlt').oninput = (e) => { state.filters.minAlt = parseFloat(e.target.value) || 0; saveState(); renderList(); };
+$('#maxMag').oninput = (e) => { state.filters.maxMag = parseFloat(e.target.value) || 99; saveState(); renderList(); };
+$('#hideBelow').onchange = (e) => { state.filters.hideBelow = e.target.checked; saveState(); renderList(); };
+
+/* ============================================================
+   STARTUP
+   ============================================================ */
+renderSitePresets();
+renderList();
+updateStatusBar();
+
+// Update UT display every minute if in "now" mode
+setInterval(() => {
+  if (state.timeMode === 'now') updateStatusBar();
+}, 60_000);
+</script>
+</body>
+</html>
