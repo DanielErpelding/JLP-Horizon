@@ -391,7 +391,7 @@
 <header class="masthead">
   <div class="masthead-row">
     <span class="brand"><span class="dot"></span>ASTEROID BRIDGE</span>
-    <span class="version" id="versionTag">v1.1 · JPL-HORIZONS</span>
+    <span class="version" id="versionTag">v1.2 · JPL via PROXY</span>
   </div>
   <h1>Éphémérides pour Seestar</h1>
   <div class="subtitle">RA/Dec topocentriques · format My Favorites</div>
@@ -726,16 +726,31 @@ async function fetchEphemeris(asteroidNum, when, site) {
     CSV_FORMAT: "'NO'"
   });
 
-  const url = `https://ssd-api.jpl.nasa.gov/horizons.api?${params.toString()}`;
-  let res;
-  try {
-    res = await fetch(url);
-  } catch (e) {
-    throw new Error('Réseau / CORS');
+  const baseUrl = `https://ssd.jpl.nasa.gov/api/horizons.api?${params.toString()}`;
+
+  // JPL Horizons doesn't serve CORS headers, so we route via a public CORS proxy.
+  // Fallback chain: try multiple proxies in case one is down.
+  const proxies = [
+    (u) => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+    (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+    (u) => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(u)}`
+  ];
+
+  let lastError = null;
+  for (const proxyFn of proxies) {
+    const url = proxyFn(baseUrl);
+    try {
+      const res = await fetch(url);
+      if (!res.ok) { lastError = new Error('HTTP ' + res.status); continue; }
+      const txt = await res.text();
+      if (!txt || txt.length < 100) { lastError = new Error('Réponse vide'); continue; }
+      return parseHorizonsResponse(txt);
+    } catch (e) {
+      lastError = e;
+      continue;
+    }
   }
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  const txt = await res.text();
-  return parseHorizonsResponse(txt);
+  throw new Error('Proxy injoignable');
 }
 
 function parseHorizonsResponse(txt) {
