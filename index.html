@@ -391,7 +391,7 @@
 <header class="masthead">
   <div class="masthead-row">
     <span class="brand"><span class="dot"></span>ASTEROID BRIDGE</span>
-    <span class="version" id="versionTag">v1.0 · JPL-HORIZONS</span>
+    <span class="version" id="versionTag">v1.1 · JPL-HORIZONS</span>
   </div>
   <h1>Éphémérides pour Seestar</h1>
   <div class="subtitle">RA/Dec topocentriques · format My Favorites</div>
@@ -726,8 +726,13 @@ async function fetchEphemeris(asteroidNum, when, site) {
     CSV_FORMAT: "'NO'"
   });
 
-  const url = `https://ssd.jpl.nasa.gov/api/horizons.api?${params.toString()}`;
-  const res = await fetch(url);
+  const url = `https://ssd-api.jpl.nasa.gov/horizons.api?${params.toString()}`;
+  let res;
+  try {
+    res = await fetch(url);
+  } catch (e) {
+    throw new Error('Réseau / CORS');
+  }
   if (!res.ok) throw new Error('HTTP ' + res.status);
   const txt = await res.text();
   return parseHorizonsResponse(txt);
